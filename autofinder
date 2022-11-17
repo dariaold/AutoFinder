@@ -1,0 +1,88 @@
+import tkinter as tk
+import requests
+
+API_KEY = "6f8e177b0b1c408cb573923e3f387f30"
+CONFIG = "e8f3ef1c-1881-4d08-b7ec-c9d4deed01c4"
+
+headers = {"Ocp-Apim-Subscription-Key": API_KEY}
+# https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/reference/query-parameters
+temp = {
+    "q": "Azure",
+    "customConfig": CONFIG,
+    "textDecorations": True, "textFormat": "HTML",
+    "answerCount": 5,
+    "setLang": "en",
+    "freshness": "day"
+}
+
+root = tk.Tk()
+
+root.geometry("600x500")
+
+q = tk.StringVar()
+count = tk.StringVar(value='5')
+setLang = tk.StringVar(value="en")
+freshness = tk.StringVar(value="month")
+result = tk.StringVar()
+
+txt = tk.Text(root, width=100, height=30, background="gray71", foreground="#90f", font=('Sans Serif', 7, 'italic bold'))
+
+
+def submit():
+    temp["q"] = q.get()
+    q.set('')
+    temp["answerCount"] = int(count.get())
+    count.set('5')
+    temp["setLang"] = setLang.get()
+    setLang.set("en")
+    temp["freshness"] = freshness.get()
+    freshness.set("month")
+    response = requests.get("https://api.bing.microsoft.com/v7.0/custom/search", headers=headers, params=temp)
+    response.raise_for_status()
+    search_results = response.json()
+    result = search_results["webPages"]["value"]
+    t = ''
+    for i in result:
+        if int(i['id'][-1]) == temp["answerCount"]:
+            break
+        t += f'''
+      № {i['id'][-1]}
+      name {i.get('name')}
+      url {i.get("url")}
+      datePublished {i.get('datePublished')}
+      siteIcon {i.get('siteIcon')}
+      '''
+    txt.delete('1.0', tk.END)
+    txt.insert(tk.INSERT, t)
+
+
+q_label = tk.Label(root, text='Request', font=('calibre', 10, 'bold'))
+
+q_entry = tk.Entry(root, textvariable=q, font=('calibre', 10, 'normal'))
+
+count_label = tk.Label(root, text='Results count', font=('calibre', 10, 'bold'))
+
+count_entry = tk.Entry(root, textvariable=count, font=('calibre', 10, 'normal'))
+
+setLang_label = tk.Label(root, text='Language', font=('calibre', 10, 'bold'))
+
+setLang_entry = tk.Entry(root, textvariable=setLang, font=('calibre', 10, 'normal'))
+
+freshness_label = tk.Label(root, text='Results freshness ', font=('calibre', 10, 'bold'))
+
+freshness_entry = tk.Entry(root, textvariable=freshness, font=('calibre', 10, 'normal'))
+
+sub_btn = tk.Button(root, text='Submit', command=submit)
+
+q_label.grid(row=0, column=0)
+q_entry.grid(row=0, column=1)
+count_label.grid(row=1, column=0)
+count_entry.grid(row=1, column=1)
+setLang_label.grid(row=2, column=0)
+setLang_entry.grid(row=2, column=1)
+freshness_label.grid(row=3, column=0)
+freshness_entry.grid(row=3, column=1)
+sub_btn.grid(row=4, column=1)
+txt.grid(row=5, column=1)
+
+root.mainloop()
